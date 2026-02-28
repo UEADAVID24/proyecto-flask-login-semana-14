@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Editar Producto</h2>
+
+<form method="post">
+    Nueva cantidad: <input type="number" name="cantidad" required><br>
+    Nuevo precio: <input type="number" step="0.01" name="precio" required><br>
+    <button type="submit">Actualizar</button>
+</form>
+{% endblock %}

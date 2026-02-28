@@ -4,9 +4,47 @@
 
 {% block content %}
 <h2>Productos Disponibles</h2>
-<ul>
-    <li>Producto 1: Manzana - $0.50</li>
-    <li>Producto 2: Banana - $0.30</li>
-    <li>Producto 3: Naranja - $0.40</li>
-</ul>
+
+<!-- 🔍 BUSCADOR DE PRODUCTOS -->
+<form method="get" action="{{ url_for('buscar_producto') }}">
+    <input type="text" name="nombre"
+           placeholder="Buscar producto por nombre (ej: Mar)"
+           value="{{ busqueda if busqueda else '' }}">
+    <button type="submit">Buscar</button>
+    <a href="{{ url_for('productos') }}">Ver todos</a>
+</form>
+
+<br>
+
+<!-- Botón Agregar -->
+<a href="{{ url_for('agregar_producto') }}">➕ Agregar Producto</a>
+
+<br><br>
+
+<table border="1" cellpadding="5">
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Cantidad</th>
+        <th>Precio ($)</th>
+        <th>Acciones</th>
+    </tr>
+
+    {% for p in productos %}
+    <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.cantidad }}</td>
+        <td>{{ p.precio }}</td>
+        <td>
+            <a href="{{ url_for('editar_producto', id=p.id) }}">Editar</a> |
+            <a href="{{ url_for('eliminar_producto', id=p.id) }}"
+               onclick="return confirm('¿Seguro que desea eliminar este producto?');">
+               Eliminar
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
 {% endblock %}
