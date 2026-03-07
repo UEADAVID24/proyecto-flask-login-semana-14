@@ -1,0 +1,3 @@
+Martillo,10,5.5
+Clavos,100,0.1
+Taladro,5,120
