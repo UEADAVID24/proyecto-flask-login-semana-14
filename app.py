@@ -2,12 +2,13 @@
 # Implementa Programación Orientada a Objetos (POO), SQLite,
 # operaciones CRUD reales, búsqueda de productos
 # persistencia en TXT, JSON y CSV
-# y configuración con SQLAlchemy ORM
+# y conexión adicional con MySQL
 
 from flask import Flask, render_template, request, redirect, url_for
 from models.producto import Producto
 from models.inventario import Inventario
 from db import get_connection
+from Conexion.conexion import obtener_conexion
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -55,7 +56,7 @@ if cursor.fetchone()[0] == 0:
 conn.close()
 
 # =========================
-# Rutas principales
+# RUTAS PRINCIPALES
 # =========================
 
 @app.route('/')
@@ -258,6 +259,63 @@ def ver_csv():
                 datos.append(fila)
 
     return render_template('datos.html', datos=datos)
+
+# =========================
+# CRUD USUARIOS (MySQL)
+# =========================
+
+@app.route('/usuarios')
+def usuarios():
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM usuarios")
+
+    usuarios = cursor.fetchall()
+
+    conexion.close()
+
+    return render_template("usuarios.html", usuarios=usuarios)
+
+
+@app.route('/usuarios/agregar', methods=['GET','POST'])
+def agregar_usuario():
+
+    if request.method == 'POST':
+
+        nombre = request.form['nombre']
+        mail = request.form['mail']
+        password = request.form['password']
+
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+
+        sql = "INSERT INTO usuarios (nombre, mail, password) VALUES (%s,%s,%s)"
+        valores = (nombre, mail, password)
+
+        cursor.execute(sql, valores)
+
+        conexion.commit()
+        conexion.close()
+
+        return redirect(url_for('usuarios'))
+
+    return render_template("agregar_usuario.html")
+
+
+@app.route('/usuarios/eliminar/<int:id>')
+def eliminar_usuario(id):
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+
+    cursor.execute("DELETE FROM usuarios WHERE id_usuario = %s", (id,))
+
+    conexion.commit()
+    conexion.close()
+
+    return redirect(url_for('usuarios'))
 
 # =========================
 # EJECUTAR APLICACIÓN
