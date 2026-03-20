@@ -5,6 +5,6 @@ def obtener_conexion():
         host="localhost",
         user="root",
         password="",
-        database="proyecto_flask"
+        database="desarrollo_web"  # 🔥 CORREGIDO
     )
     return conexion

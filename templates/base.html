@@ -8,6 +8,7 @@
 <body>
     <header>
         <h1>Mi Proyecto Flask</h1>
+
         <nav>
             <ul>
                 <li><a href="{{ url_for('home') }}">Inicio</a></li>
@@ -15,6 +16,14 @@
                 <li><a href="{{ url_for('productos') }}">Productos</a></li>
                 <li><a href="{{ url_for('factura') }}">Factura</a></li>
                 <li><a href="{{ url_for('clientes') }}">Clientes</a></li>
+
+                {% if current_user.is_authenticated %}
+                    <li>👤 {{ current_user.nombre }}</li>
+                    <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Iniciar sesión</a></li>
+                    <li><a href="{{ url_for('registro') }}">Registrarse</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>

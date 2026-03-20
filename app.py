@@ -1,8 +1,4 @@
 # Aplicación Flask para un Sistema Avanzado de Gestión de Inventario
-# Implementa Programación Orientada a Objetos (POO), SQLite,
-# operaciones CRUD reales, búsqueda de productos
-# persistencia en TXT, JSON y CSV
-# y conexión adicional con MySQL
 
 from flask import Flask, render_template, request, redirect, url_for
 from models.producto import Producto
@@ -12,11 +8,47 @@ from Conexion.conexion import obtener_conexion
 
 from flask_sqlalchemy import SQLAlchemy
 
+# 🔐 LOGIN
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+
 import json
 import csv
 import os
 
 app = Flask(__name__)
+
+# 🔐 CONFIG LOGIN
+app.secret_key = "clave_secreta"
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+# =========================
+# MODELO USUARIO
+# =========================
+
+class Usuario(UserMixin):
+    def __init__(self, id_usuario, nombre, email, password):
+        self.id = id_usuario
+        self.nombre = nombre
+        self.email = email
+        self.password = password
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM usuarios WHERE id_usuario = %s", (user_id,))
+    user = cursor.fetchone()
+
+    conexion.close()
+
+    if user:
+        return Usuario(user[0], user[1], user[2], user[3])
+    return None
 
 # =========================
 # CONFIGURACIÓN SQLAlchemy
@@ -28,7 +60,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # =========================
-# MODELO ORM (SQLAlchemy)
+# MODELO ORM
 # =========================
 
 class ProductoORM(db.Model):
@@ -38,7 +70,7 @@ class ProductoORM(db.Model):
     precio = db.Column(db.Float)
 
 # =========================
-# Inventario (POO + SQLite)
+# Inventario
 # =========================
 
 inventario = Inventario()
@@ -56,6 +88,99 @@ if cursor.fetchone()[0] == 0:
 conn.close()
 
 # =========================
+# 🔑 LOGIN
+# =========================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+
+        cursor.execute(
+            "SELECT * FROM usuarios WHERE email = %s AND password = %s",
+            (email, password)
+        )
+
+        user = cursor.fetchone()
+        conexion.close()
+
+        if user:
+            usuario = Usuario(user[0], user[1], user[2], user[3])
+            login_user(usuario)
+            return redirect(url_for('panel'))
+
+        return "Credenciales incorrectas"
+
+    return render_template('login.html')
+
+
+# =========================
+# 📝 REGISTRO
+# =========================
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+
+    # 🔒 SI YA ESTÁ LOGUEADO, LO REDIRIGE
+    if current_user.is_authenticated:
+        return redirect(url_for('panel'))
+
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        email = request.form['email']
+        password = request.form['password']
+
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+
+        # Verificar si ya existe el email
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+        existente = cursor.fetchone()
+
+        if existente:
+            conexion.close()
+            return "El correo ya está registrado"
+
+        # Insertar nuevo usuario
+        sql = "INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)"
+        valores = (nombre, email, password)
+
+        cursor.execute(sql, valores)
+        conexion.commit()
+        conexion.close()
+
+        return redirect(url_for('login'))
+
+    return render_template('registro.html')
+
+
+# =========================
+# 🔓 LOGOUT
+# =========================
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
+# =========================
+# 🔐 PANEL PROTEGIDO
+# =========================
+
+@app.route('/panel')
+@login_required
+def panel():
+    return f"Bienvenido {current_user.nombre}"
+
+
+# =========================
 # RUTAS PRINCIPALES
 # =========================
 
@@ -70,208 +195,97 @@ def about():
 
 
 @app.route('/productos')
+@login_required
 def productos():
     productos = inventario.obtener_todos()
     return render_template('productos.html', productos=productos)
+
 
 # =========================
 # BUSCAR PRODUCTOS
 # =========================
 
-@app.route('/productos/buscar', methods=['GET'])
+@app.route('/productos/buscar')
+@login_required
 def buscar_producto():
-
     nombre = request.args.get('nombre', '')
     productos = inventario.buscar_por_nombre(nombre)
 
-    return render_template(
-        'productos.html',
-        productos=productos,
-        busqueda=nombre
-    )
+    return render_template('productos.html', productos=productos, busqueda=nombre)
+
 
 # =========================
 # OTRAS PÁGINAS
 # =========================
 
 @app.route('/factura')
+@login_required
 def factura():
     return render_template('factura.html')
 
 
 @app.route('/clientes')
+@login_required
 def clientes():
     return render_template('clientes.html')
 
+
 # =========================
-# CRUD DE PRODUCTOS
+# CRUD PRODUCTOS
 # =========================
 
 @app.route('/productos/agregar', methods=['GET', 'POST'])
+@login_required
 def agregar_producto():
 
     if request.method == 'POST':
-
         id = int(request.form['id'])
         nombre = request.form['nombre']
         cantidad = int(request.form['cantidad'])
         precio = float(request.form['precio'])
 
-        inventario.agregar_producto(
-            Producto(id, nombre, cantidad, precio)
-        )
+        inventario.agregar_producto(Producto(id, nombre, cantidad, precio))
 
         return redirect(url_for('productos'))
 
     return render_template('agregar_producto.html')
 
 
-@app.route('/productos/editar/<int:id>', methods=['GET', 'POST'])
-def editar_producto(id):
-
-    if request.method == 'POST':
-
-        cantidad = int(request.form['cantidad'])
-        precio = float(request.form['precio'])
-
-        inventario.actualizar_producto(id, cantidad, precio)
-
-        return redirect(url_for('productos'))
-
-    return render_template('editar_producto.html', id=id)
-
-
 @app.route('/productos/eliminar/<int:id>')
+@login_required
 def eliminar_producto(id):
-
     inventario.eliminar_producto(id)
-
     return redirect(url_for('productos'))
+
 
 # =========================
-# PERSISTENCIA DE DATOS
-# TXT - JSON - CSV
-# =========================
-
-@app.route('/guardar_txt', methods=['POST'])
-def guardar_txt():
-
-    nombre = request.form['nombre']
-    cantidad = request.form['cantidad']
-    precio = request.form['precio']
-
-    ruta = os.path.join('data', 'datos.txt')
-
-    with open(ruta, 'a') as f:
-        f.write(f"{nombre},{cantidad},{precio}\n")
-
-    return redirect(url_for('productos'))
-
-
-@app.route('/guardar_json', methods=['POST'])
-def guardar_json():
-
-    nombre = request.form['nombre']
-    cantidad = request.form['cantidad']
-    precio = request.form['precio']
-
-    datos = {
-        "nombre": nombre,
-        "cantidad": cantidad,
-        "precio": precio
-    }
-
-    ruta = os.path.join('data', 'datos.json')
-
-    with open(ruta, 'a') as f:
-        json.dump(datos, f)
-        f.write("\n")
-
-    return redirect(url_for('productos'))
-
-
-@app.route('/guardar_csv', methods=['POST'])
-def guardar_csv():
-
-    nombre = request.form['nombre']
-    cantidad = request.form['cantidad']
-    precio = request.form['precio']
-
-    ruta = os.path.join('data', 'datos.csv')
-
-    with open(ruta, 'a', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow([nombre, cantidad, precio])
-
-    return redirect(url_for('productos'))
-
-# =========================
-# LEER DATOS TXT
+# DATOS TXT
 # =========================
 
 @app.route('/ver_txt')
+@login_required
 def ver_txt():
-
     ruta = os.path.join('data', 'datos.txt')
     datos = []
 
     if os.path.exists(ruta):
-
         with open(ruta, 'r') as f:
             datos = f.readlines()
 
     return render_template('datos.html', datos=datos)
 
-# =========================
-# LEER DATOS JSON
-# =========================
-
-@app.route('/ver_json')
-def ver_json():
-
-    ruta = os.path.join('data', 'datos.json')
-    datos = []
-
-    if os.path.exists(ruta):
-
-        with open(ruta, 'r') as f:
-            for linea in f:
-                datos.append(json.loads(linea))
-
-    return render_template('datos.html', datos=datos)
 
 # =========================
-# LEER DATOS CSV
-# =========================
-
-@app.route('/ver_csv')
-def ver_csv():
-
-    ruta = os.path.join('data', 'datos.csv')
-    datos = []
-
-    if os.path.exists(ruta):
-
-        with open(ruta, 'r') as f:
-            reader = csv.reader(f)
-
-            for fila in reader:
-                datos.append(fila)
-
-    return render_template('datos.html', datos=datos)
-
-# =========================
-# CRUD USUARIOS (MySQL)
+# USUARIOS MYSQL
 # =========================
 
 @app.route('/usuarios')
+@login_required
 def usuarios():
-
     conexion = obtener_conexion()
     cursor = conexion.cursor()
 
     cursor.execute("SELECT * FROM usuarios")
-
     usuarios = cursor.fetchall()
 
     conexion.close()
@@ -279,46 +293,8 @@ def usuarios():
     return render_template("usuarios.html", usuarios=usuarios)
 
 
-@app.route('/usuarios/agregar', methods=['GET','POST'])
-def agregar_usuario():
-
-    if request.method == 'POST':
-
-        nombre = request.form['nombre']
-        mail = request.form['mail']
-        password = request.form['password']
-
-        conexion = obtener_conexion()
-        cursor = conexion.cursor()
-
-        sql = "INSERT INTO usuarios (nombre, mail, password) VALUES (%s,%s,%s)"
-        valores = (nombre, mail, password)
-
-        cursor.execute(sql, valores)
-
-        conexion.commit()
-        conexion.close()
-
-        return redirect(url_for('usuarios'))
-
-    return render_template("agregar_usuario.html")
-
-
-@app.route('/usuarios/eliminar/<int:id>')
-def eliminar_usuario(id):
-
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-
-    cursor.execute("DELETE FROM usuarios WHERE id_usuario = %s", (id,))
-
-    conexion.commit()
-    conexion.close()
-
-    return redirect(url_for('usuarios'))
-
 # =========================
-# EJECUTAR APLICACIÓN
+# EJECUTAR
 # =========================
 
 if __name__ == '__main__':
