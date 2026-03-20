@@ -1,53 +1,109 @@
-Sistema Avanzado de Gestión de Inventario – Flask
-Descripción del Proyecto
+🚀 Sistema Avanzado de Gestión de Inventario – Flask
+📌 Descripción del Proyecto
 
-Este proyecto corresponde a un Sistema Avanzado de Gestión de Inventario desarrollado con Flask, como continuación del proyecto iniciado en las semanas 9, 10 y 11.
+Este proyecto corresponde a un Sistema Avanzado de Gestión de Inventario desarrollado con Flask, como continuación del trabajo realizado en las semanas 9, 10, 11, 12, 13 y 14.
 
-El sistema permite administrar productos de una tienda (ferretería) aplicando Programación Orientada a Objetos (POO), uso de colecciones, operaciones CRUD conectadas a una base de datos SQLite y diferentes mecanismos de persistencia de datos.
+El sistema permite administrar productos de una tienda (ferretería) aplicando Programación Orientada a Objetos (POO), operaciones CRUD, persistencia de datos en múltiples formatos (TXT, JSON, CSV), uso de SQLite y ahora también integración con MySQL y autenticación de usuarios.
 
-Además, el sistema incorpora almacenamiento de datos en archivos TXT, JSON y CSV, permitiendo visualizar la información almacenada en cada formato desde la aplicación web.
+🎯 Objetivos
 
-Objetivos
+Aplicar Programación Orientada a Objetos (POO).
 
-Aplicar Programación Orientada a Objetos (POO) para estructurar el sistema.
+Implementar operaciones CRUD completas.
 
-Utilizar colecciones de Python para la gestión de datos.
+Utilizar bases de datos SQLite y MySQL.
 
-Implementar operaciones CRUD reales (Crear, Leer, Actualizar, Eliminar).
+Implementar persistencia en TXT, JSON y CSV.
 
-Almacenar la información en una base de datos SQLite.
+Desarrollar interfaces web con Flask y Jinja2.
 
-Implementar persistencia de datos en archivos TXT, JSON y CSV.
+Implementar autenticación de usuarios con Flask-Login.
 
-Integrar formularios web para la gestión del inventario.
+Proteger rutas del sistema.
 
-Utilizar SQLAlchemy ORM para la conexión con SQLite.
+🆕 Semana 14 – Autenticación de Usuarios
 
-Tecnologías Utilizadas
+En esta fase se implementó un sistema completo de autenticación utilizando Flask-Login.
+
+🔐 Funcionalidades añadidas:
+
+Registro de usuarios
+
+Inicio de sesión (login)
+
+Cierre de sesión (logout)
+
+Protección de rutas con @login_required
+
+Control de acceso a funcionalidades del sistema
+
+🧑‍💻 Sistema de Usuarios (MySQL)
+
+Se integró una base de datos MySQL con la tabla:
+
+📋 Tabla: usuarios
+
+id_usuario
+
+nombre
+
+email
+
+password
+
+Los usuarios pueden registrarse y luego autenticarse para acceder al sistema.
+
+🔒 Seguridad y Acceso
+
+Las siguientes rutas están protegidas:
+
+/panel
+
+/productos
+
+/clientes
+
+/factura
+
+/ver_txt
+
+/usuarios
+
+Si el usuario no ha iniciado sesión, es redirigido automáticamente al login.
+
+🛠 Tecnologías Utilizadas
 
 Python 3
 
 Flask
 
+Flask-Login
+
 Flask-SQLAlchemy
 
 SQLite
+
+MySQL
 
 HTML + Jinja2
 
 CSS
 
-Visual Studio Code
-
 Git y GitHub
 
-Estructura del Proyecto
+Visual Studio Code
+
+📂 Estructura del Proyecto
 Mi_proyecto_flask_Clinton_Alvarado/
 │
 ├── app.py
 ├── db.py
 ├── init_db.py
+├── desarrollo_web.sql
 ├── requirements.txt
+│
+├── Conexion/
+│   └── conexion.py
 │
 ├── models/
 │   ├── producto.py
@@ -64,9 +120,10 @@ Mi_proyecto_flask_Clinton_Alvarado/
 ├── templates/
 │   ├── base.html
 │   ├── index.html
+│   ├── login.html
+│   ├── registro.html
 │   ├── productos.html
 │   ├── agregar_producto.html
-│   ├── editar_producto.html
 │   ├── clientes.html
 │   └── datos.html
 │
@@ -74,13 +131,8 @@ Mi_proyecto_flask_Clinton_Alvarado/
 │   └── styles.css
 │
 └── README.md
-Programación Orientada a Objetos (POO)
-
-El sistema se basa en dos clases principales:
-
+🧠 Programación Orientada a Objetos (POO)
 Clase Producto
-
-Representa un producto del inventario con los atributos:
 
 id
 
@@ -92,91 +144,75 @@ precio
 
 Clase Inventario
 
-Gestiona los productos del sistema y contiene los métodos para realizar las operaciones CRUD conectadas a SQLite.
+Gestión de productos
 
-Persistencia de Datos
+Operaciones CRUD
 
-El sistema permite almacenar información en diferentes formatos:
+💾 Persistencia de Datos
+
+El sistema guarda información en:
 
 TXT
 
-Se utiliza la función open() para guardar y leer registros en archivos de texto.
-
 JSON
-
-Se utiliza la librería json para convertir los datos a diccionario y almacenarlos en formato JSON.
 
 CSV
 
-Se utiliza la librería csv para guardar y leer registros en formato tabular.
-
-Los datos almacenados pueden visualizarse desde las rutas:
+Rutas disponibles:
 
 /ver_txt
+
 /ver_json
+
 /ver_csv
-Base de Datos SQLite
 
-El sistema utiliza SQLite para el almacenamiento persistente de los productos.
+🗄 Bases de Datos
+SQLite
 
-La base de datos contiene la tabla:
+Tabla: productos
 
-productos
+MySQL
 
-La conexión a la base de datos se gestiona desde el archivo:
+Tabla: usuarios
 
-db.py
-Operaciones CRUD Implementadas
+🔄 Operaciones CRUD
 
-El sistema permite realizar las siguientes operaciones:
+✔ Crear productos
+✔ Leer productos
+✔ Actualizar productos
+✔ Eliminar productos
 
-Crear
-Agregar nuevos productos mediante formularios web.
+🌐 Interfaz de Usuario
 
-Leer
-Mostrar la lista de productos almacenados en la base de datos.
+El sistema permite:
 
-Actualizar
-Modificar la cantidad o el precio de un producto existente.
+Login y registro de usuarios
 
-Eliminar
-Eliminar productos del inventario.
-
-Interfaz de Usuario
-
-La aplicación web permite:
-
-Visualizar el inventario
+Visualizar inventario
 
 Buscar productos
 
 Agregar productos
 
-Editar productos
-
 Eliminar productos
 
-Visualizar datos almacenados en TXT, JSON y CSV
+Ver datos en TXT
 
-Ejecución del Proyecto
-
-1️⃣ Activar el entorno virtual
-
+▶️ Ejecución del Proyecto
+1️⃣ Activar entorno virtual
 .\venv\Scripts\activate
-
-2️⃣ Crear la base de datos
-
+2️⃣ Crear base de datos SQLite
 py init_db.py
+3️⃣ Configurar MySQL
 
-3️⃣ Ejecutar la aplicación
+Importar archivo desarrollo_web.sql en phpMyAdmin
 
+4️⃣ Ejecutar la aplicación
 py app.py
-
-4️⃣ Abrir en el navegador
+5️⃣ Abrir en navegador
 http://127.0.0.1:5000
-
-Autor
+👨‍🎓 Autor
 
 Clinton David Alvarado Chongo
 
-Proyecto académico – Desarrollo de aplicaciones web con Flask
+Proyecto académico – Desarrollo de aplicaciones web con Flask 🚀
